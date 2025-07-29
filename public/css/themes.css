@@ -1,0 +1,681 @@
+/* Theme Variables */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #6c757d;
+  --border-color: #e1e5e9;
+  --shadow: 0 2px 10px rgba(0,0,0,0.1);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --code-bg: #f8f9fa;
+  --input-bg: #ffffff;
+  --input-border: #e1e5e9;
+  --input-focus: #667eea;
+  --header-bg: #ffffff;
+  --nav-bg: #ffffff;
+  --card-bg: #ffffff;
+  --hover-bg: rgba(102, 126, 234, 0.1);
+  --success-bg: rgba(40, 167, 69, 0.1);
+  --success-text: #28a745;
+  --success-border: rgba(40, 167, 69, 0.3);
+  --danger-bg: rgba(220, 53, 69, 0.1);
+  --danger-text: #dc3545;
+  --danger-border: rgba(220, 53, 69, 0.3);
+}
+
+/* Dark theme - also apply when body has dark theme class as fallback */
+[data-theme="dark"],
+body.dark-theme,
+html.dark-theme {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --text-muted: #999999;
+  --border-color: #404040;
+  --shadow: 0 2px 10px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --code-bg: #2d2d2d;
+  --input-bg: #2d2d2d;
+  --input-border: #404040;
+  --input-focus: #667eea;
+  --header-bg: #1a1a1a;
+  --nav-bg: #1a1a1a;
+  --card-bg: #2d2d2d;
+  --hover-bg: rgba(102, 126, 234, 0.2);
+  --success-bg: rgba(40, 167, 69, 0.2);
+  --success-text: #4caf50;
+  --success-border: rgba(40, 167, 69, 0.4);
+  --danger-bg: rgba(220, 53, 69, 0.2);
+  --danger-text: #f44336;
+  --danger-border: rgba(220, 53, 69, 0.4);
+}
+
+/* System theme (uses media query) */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #404040;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #999999;
+    --border-color: #404040;
+    --shadow: 0 2px 10px rgba(0,0,0,0.3);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --code-bg: #2d2d2d;
+    --input-bg: #2d2d2d;
+    --input-border: #404040;
+    --input-focus: #667eea;
+    --header-bg: #1a1a1a;
+    --nav-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --hover-bg: rgba(102, 126, 234, 0.2);
+    --success-bg: rgba(40, 167, 69, 0.2);
+    --success-text: #4caf50;
+    --success-border: rgba(40, 167, 69, 0.4);
+    --danger-bg: rgba(220, 53, 69, 0.2);
+    --danger-text: #f44336;
+    --danger-border: rgba(220, 53, 69, 0.4);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #6c757d;
+    --border-color: #e1e5e9;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --code-bg: #f8f9fa;
+    --input-bg: #ffffff;
+    --input-border: #e1e5e9;
+    --input-focus: #667eea;
+    --header-bg: #ffffff;
+    --nav-bg: #ffffff;
+    --card-bg: #ffffff;
+    --hover-bg: rgba(102, 126, 234, 0.1);
+    --success-bg: rgba(40, 167, 69, 0.1);
+    --success-text: #28a745;
+    --success-border: rgba(40, 167, 69, 0.3);
+    --danger-bg: rgba(220, 53, 69, 0.1);
+    --danger-text: #dc3545;
+    --danger-border: rgba(220, 53, 69, 0.3);
+  }
+}
+
+/* Base styles using CSS variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Main content container */
+.container, main, .main-content {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Ensure all text elements use proper colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+}
+
+p, div, span {
+  color: var(--text-primary) !important;
+}
+
+/* Specific text color overrides */
+.text-muted, .muted {
+  color: var(--text-muted) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Fix small text elements */
+small {
+  color: var(--text-secondary) !important;
+}
+
+/* Fix labels and form text */
+label {
+  color: var(--text-primary) !important;
+}
+
+.form-text {
+  color: var(--text-secondary) !important;
+}
+
+/* Dashboard cards specific styling */
+.welcome-card h2 {
+  color: var(--text-primary) !important;
+}
+
+.welcome-card p {
+  color: var(--text-secondary) !important;
+}
+
+.card h3 {
+  color: var(--text-primary) !important;
+}
+
+.card p {
+  color: var(--text-secondary) !important;
+}
+
+/* Theme Toggle Component */
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+}
+
+.theme-toggle-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--hover-bg);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  min-width: 120px;
+  display: none;
+}
+
+.theme-dropdown.show {
+  display: block;
+}
+
+.theme-option {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary) !important;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+
+
+.theme-option:last-child {
+  border-bottom: none;
+}
+
+.theme-option:hover {
+  background: var(--hover-bg) !important;
+}
+
+.theme-option.active {
+  background: var(--hover-bg);
+  font-weight: 500;
+}
+
+.theme-option:first-child {
+  border-radius: 5px 5px 0 0;
+}
+
+.theme-option:last-child {
+  border-radius: 0 0 5px 5px;
+}
+
+/* Theme Toggle Button and Dropdown Styles */
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+}
+
+.theme-toggle-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--hover-bg);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  min-width: 150px;
+  display: none;
+}
+
+.theme-dropdown.show {
+  display: block;
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Override specific elements to use CSS variables */
+.header {
+  background: var(--header-bg) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.nav {
+  background: var(--nav-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.card, .login-container, .welcome-card, .api-info {
+  background: var(--card-bg) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.header h1 {
+  color: var(--text-primary) !important;
+}
+
+.nav li a {
+  color: var(--text-secondary) !important;
+}
+
+.nav li a:hover,
+.nav li a.active {
+  color: #667eea !important;
+}
+
+input, textarea {
+  background: var(--input-bg) !important;
+  border: 2px solid var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--input-focus) !important;
+}
+
+.table th {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.code-block, .token-cell, .bot-token {
+  background: var(--code-bg) !important;
+  color: var(--text-primary) !important;
+  border-left: 4px solid #667eea !important;
+}
+
+.help-section {
+  background: var(--bg-tertiary) !important;
+  border-left: 4px solid #007bff !important;
+}
+
+.help-section h3 {
+  color: var(--text-primary) !important;
+}
+
+.alert-warning {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border-left: 4px solid var(--warning) !important;
+}
+
+.admin-only {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border-left: 4px solid var(--warning) !important;
+}
+
+.default-creds {
+  background: var(--bg-tertiary) !important;
+  border-left: 4px solid var(--success) !important;
+}
+
+.default-creds h4,
+.default-creds p {
+  color: var(--text-primary) !important;
+}
+
+.error {
+  background: rgba(220, 53, 69, 0.1) !important;
+  color: var(--danger) !important;
+  border-left: 4px solid var(--danger) !important;
+}
+
+small {
+  color: var(--text-muted) !important;
+}
+
+/* Admin Dropdown Styles */
+.admin-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.admin-dropdown-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.admin-dropdown-btn:hover {
+  background: var(--hover-bg);
+}
+
+.admin-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.admin-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  min-width: 180px;
+  display: none;
+  margin-top: 0.5rem;
+}
+
+.admin-dropdown.show {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: var(--hover-bg);
+}
+
+.dropdown-item:first-child {
+  border-radius: 5px 5px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0 0 5px 5px;
+}
+
+/* Modal Dialog Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.modal-footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Dashboard specific dark mode fixes */
+.dashboard-grid {
+  background-color: transparent !important;
+}
+
+.dashboard-grid .card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.dashboard-grid .card h3 {
+  color: var(--text-primary) !important;
+}
+
+.dashboard-grid .card p {
+  color: var(--text-secondary) !important;
+}
+
+/* Fix table styling in dark mode */
+.table {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.table td {
+  color: var(--text-primary) !important;
+}
+
+/* Fix button text colors */
+button {
+  color: inherit !important;
+}
+
+.btn-primary {
+  background-color: #667eea !important;
+  color: white !important;
+  border-color: #667eea !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.btn-danger {
+  background-color: var(--danger) !important;
+  color: white !important;
+  border-color: var(--danger) !important;
+}
+
+/* Fix admin dropdown text */
+.admin-dropdown-btn {
+  color: var(--text-primary) !important;
+}
+
+.admin-dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.admin-dropdown-menu a {
+  color: var(--text-primary) !important;
+}
+
+.admin-dropdown-menu a:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Add Button Styles */
+.add-btn {
+  background: var(--gradient);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-header h2 {
+  color: var(--text-primary);
+  margin: 0;
+}
