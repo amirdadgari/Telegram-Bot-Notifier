@@ -14,11 +14,11 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: var(--bg-primary);
         }
         
         .header {
-            background: white;
+            background: var(--bg-secondary);
             padding: 1rem 2rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
@@ -38,9 +38,9 @@
         }
         
         .nav {
-            background: white;
+            background: var(--bg-secondary);
             padding: 0 2rem;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .nav ul {
@@ -71,7 +71,7 @@
         }
         
         .welcome-card {
-            background: white;
+            background: var(--bg-secondary);
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -85,7 +85,7 @@
         }
         
         .card {
-            background: white;
+            background: var(--bg-secondary);
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -127,7 +127,7 @@
         }
         
         .api-info {
-            background: white;
+            background: var(--bg-secondary);
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -135,10 +135,10 @@
         }
         
         .code-block {
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             padding: 1rem;
             border-radius: 5px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid var(--border-primary);
             margin: 1rem 0;
             font-family: 'Courier New', monospace;
             overflow-x: auto;
@@ -149,10 +149,6 @@
     <div class="header">
         <h1>📱 Telegram Bot Notifier</h1>
         <div class="user-info">
-            <span>Welcome, <%= username %>!</span>
-            <% if (isAdmin) { %>
-                <span class="badge" style="background: #28a745; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem;">Admin</span>
-            <% } %>
             <!-- Theme Toggle -->
             <div class="theme-toggle" style="margin-right: 1rem;">
                 <button class="theme-toggle-btn" id="theme-toggle-btn">
@@ -161,21 +157,41 @@
                     <span style="margin-left: 0.3rem;">▼</span>
                 </button>
                 <div class="theme-dropdown" id="theme-dropdown">
-                    <div class="theme-option" data-theme="system">
+                    <div class="theme-option" data-theme-value="system">
                         <span>🖥️</span>
                         <span>System</span>
                     </div>
-                    <div class="theme-option" data-theme="light">
+                    <div class="theme-option" data-theme-value="light">
                         <span>☀️</span>
                         <span>Light</span>
                     </div>
-                    <div class="theme-option" data-theme="dark">
+                    <div class="theme-option" data-theme-value="dark">
                         <span>🌙</span>
                         <span>Dark</span>
                     </div>
                 </div>
             </div>
-            <a href="/logout" class="btn btn-secondary">Logout</a>
+            
+            <!-- Admin Dropdown -->
+            <div class="admin-dropdown-container">
+                <button class="admin-dropdown-btn" id="admin-dropdown-btn">
+                    <span>Welcome, <%= username %>!</span>
+                    <% if (isAdmin) { %>
+                        <span class="admin-badge">🔑 Admin</span>
+                    <% } %>
+                    <span style="margin-left: 0.5rem;">▼</span>
+                </button>
+                <div class="admin-dropdown" id="admin-dropdown">
+                    <a href="/change-password" class="dropdown-item">
+                        <span>🔐</span>
+                        <span>Change Password</span>
+                    </a>
+                    <a href="/logout" class="dropdown-item">
+                        <span>😪</span>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -187,7 +203,6 @@
             <% if (isAdmin) { %>
                 <li><a href="/users">Users</a></li>
             <% } %>
-            <li><a href="/change-password">Change Password</a></li>
         </ul>
     </nav>
     

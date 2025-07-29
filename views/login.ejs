@@ -60,7 +60,7 @@
         input {
             width: 100%;
             padding: 0.8rem;
-            border: 2px solid #e1e5e9;
+            border: 2px solid var(--border-primary);
             border-radius: 5px;
             font-size: 1rem;
             transition: border-color 0.3s;
@@ -68,7 +68,7 @@
         
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--border-primary);
         }
         
         .btn {
@@ -94,15 +94,15 @@
             padding: 0.8rem;
             border-radius: 5px;
             margin-bottom: 1rem;
-            border-left: 4px solid #c33;
+            border-left: 4px solid var(--border-primary);
         }
         
         .default-creds {
             margin-top: 1.5rem;
             padding: 1rem;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 5px;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid var(--border-primary);
         }
         
         .default-creds h4 {
@@ -127,15 +127,15 @@
                 <span style="margin-left: 0.3rem;">▼</span>
             </button>
             <div class="theme-dropdown" id="theme-dropdown">
-                <div class="theme-option" data-theme="system">
+                <div class="theme-option" data-theme-value="system">
                     <span>🖥️</span>
                     <span>System</span>
                 </div>
-                <div class="theme-option" data-theme="light">
+                <div class="theme-option" data-theme-value="light">
                     <span>☀️</span>
                     <span>Light</span>
                 </div>
-                <div class="theme-option" data-theme="dark">
+                <div class="theme-option" data-theme-value="dark">
                     <span>🌙</span>
                     <span>Dark</span>
                 </div>

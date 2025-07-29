@@ -14,11 +14,11 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: var(--bg-primary);
         }
         
         .header {
-            background: white;
+            background: var(--bg-secondary);
             padding: 1rem 2rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
@@ -32,9 +32,9 @@
         }
         
         .nav {
-            background: white;
+            background: var(--bg-secondary);
             padding: 0 2rem;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .nav ul {
@@ -65,7 +65,7 @@
         }
         
         .card {
-            background: white;
+            background: var(--bg-secondary);
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -81,26 +81,43 @@
             margin-bottom: 1.5rem;
         }
         
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #333;
+            color: var(--text-primary);
             font-weight: 500;
+            font-size: 0.9rem;
         }
         
-        input, textarea {
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="email"],
+        .form-group textarea {
             width: 100%;
-            max-width: 400px;
             padding: 0.8rem;
-            border: 2px solid #e1e5e9;
+            border: 2px solid var(--border-primary);
             border-radius: 5px;
             font-size: 1rem;
             transition: border-color 0.3s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
         }
         
-        input:focus, textarea:focus {
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
         }
         
         .btn {
@@ -128,6 +145,8 @@
         }
         
         .btn-secondary {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
             background: #6c757d;
         }
         
@@ -141,11 +160,11 @@
         .table td {
             padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .table th {
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             font-weight: 600;
             color: #333;
         }
@@ -194,40 +213,184 @@
         .bot-token {
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             padding: 0.5rem;
             border-radius: 3px;
             word-break: break-all;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            margin: auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+        
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-primary);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px) scale(0.9); }
+            to { transform: translateY(0) scale(1); }
+        }
+        
+        .btn-test {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-test:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn-test:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .test-result.success {
+            background: var(--success-bg, rgba(40, 167, 69, 0.1));
+            color: var(--success-text, #28a745);
+            border: 1px solid var(--success-border, rgba(40, 167, 69, 0.3));
+        }
+        
+        .test-result.error {
+            background: var(--danger-bg, rgba(220, 53, 69, 0.1));
+            color: var(--danger-text, #dc3545);
+            border: 1px solid var(--danger-border, rgba(220, 53, 69, 0.3));
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📱 Telegram Bot Notifier</h1>
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="user-info">
             <!-- Theme Toggle -->
-            <div class="theme-toggle">
+            <div class="theme-toggle" style="margin-right: 1rem;">
                 <button class="theme-toggle-btn" id="theme-toggle-btn">
                     <span id="theme-icon">🖥️</span>
                     <span id="theme-text">System</span>
                     <span style="margin-left: 0.3rem;">▼</span>
                 </button>
                 <div class="theme-dropdown" id="theme-dropdown">
-                    <div class="theme-option" data-theme="system">
+                    <div class="theme-option" data-theme-value="system">
                         <span>🖥️</span>
                         <span>System</span>
                     </div>
-                    <div class="theme-option" data-theme="light">
+                    <div class="theme-option" data-theme-value="light">
                         <span>☀️</span>
                         <span>Light</span>
                     </div>
-                    <div class="theme-option" data-theme="dark">
+                    <div class="theme-option" data-theme-value="dark">
                         <span>🌙</span>
                         <span>Dark</span>
                     </div>
                 </div>
             </div>
-            <a href="/logout" class="btn btn-secondary">Logout</a>
+            
+            <!-- Admin Dropdown -->
+            <div class="admin-dropdown-container">
+                <button class="admin-dropdown-btn" id="admin-dropdown-btn">
+                    <span>Welcome, <%= username || 'User' %>!</span>
+                    <% if (isAdmin) { %>
+                        <span class="admin-badge">🔑 Admin</span>
+                    <% } %>
+                    <span style="margin-left: 0.5rem;">▼</span>
+                </button>
+                <div class="admin-dropdown" id="admin-dropdown">
+                    <a href="/change-password" class="dropdown-item">
+                        <span>🔐</span>
+                        <span>Change Password</span>
+                    </a>
+                    <a href="/logout" class="dropdown-item">
+                        <span>😪</span>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -236,8 +399,9 @@
             <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/tokens">Access Tokens</a></li>
             <li><a href="/bots" class="active">Telegram Bots</a></li>
-            <li><a href="/users">Users</a></li>
-            <li><a href="/change-password">Change Password</a></li>
+            <% if (isAdmin) { %>
+                <li><a href="/users">Users</a></li>
+            <% } %>
         </ul>
     </nav>
     
@@ -261,35 +425,15 @@
             </ol>
         </div>
         
-        <div class="card">
-            <h2>🤖 Add New Telegram Bot</h2>
-            <p style="color: #666; margin-bottom: 1.5rem;">Configure a Telegram bot to receive webhook messages.</p>
-            
-            <form method="POST" action="/bots">
-                <div class="form-group">
-                    <label for="bot_name">Bot Name</label>
-                    <input type="text" id="bot_name" name="bot_name" required placeholder="e.g., My Notification Bot">
-                    <small style="color: #666;">A friendly name to identify this bot</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="bot_token">Bot Token</label>
-                    <input type="text" id="bot_token" name="bot_token" required placeholder="e.g., 123456789:ABCdefGhIJKlmNOpqrsTUVwxyZ">
-                    <small style="color: #666;">Get this from @BotFather on Telegram</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="chat_id">Chat ID</label>
-                    <input type="text" id="chat_id" name="chat_id" required placeholder="e.g., -1001234567890 or 123456789">
-                    <small style="color: #666;">The chat/channel/group ID where messages will be sent</small>
-                </div>
-                
-                <button type="submit" class="btn">Add Bot</button>
-            </form>
+        <div class="page-header">
+            <h2>🤖 Telegram Bots</h2>
+            <button class="add-btn" data-modal="add-bot-modal">
+                <span>+</span>
+                <span>New Bot</span>
+            </button>
         </div>
         
         <div class="card">
-            <h2>Your Telegram Bots</h2>
             
             <% if (error) { %>
                 <div class="error"><%= error %></div>
@@ -332,6 +476,7 @@
                                     <% } %>
                                 </td>
                                 <td>
+                                    <button type="button" class="btn btn-secondary" onclick="editBot(<%= bot.id %>)" style="margin-right: 0.5rem;">Edit</button>
                                     <form method="POST" action="/bots/<%= bot.id %>/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this bot configuration?')">
                                         <button type="submit" class="btn btn-danger">Delete</button>
                                     </form>
@@ -348,10 +493,10 @@
             <h3>🧪 Test Your Bot Configuration</h3>
             <p>Once you've created access tokens and configured bots, you can test the system:</p>
             
-            <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin: 1rem 0; font-family: 'Courier New', monospace; overflow-x: auto;">
-curl -X POST http://localhost:3000/api/send \<br>
-&nbsp;&nbsp;-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \<br>
-&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 5px; margin: 1rem 0; font-family: 'Courier New', monospace; overflow-x: auto;">
+curl -X POST http://localhost:3000/api/send \
+&nbsp;&nbsp;-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+&nbsp;&nbsp;-H "Content-Type: application/json" \
 &nbsp;&nbsp;-d '{"message": "🚀 Test message from webhook!"}'
             </div>
             
@@ -360,6 +505,216 @@ curl -X POST http://localhost:3000/api/send \<br>
         <% } %>
     </div>
     
+    <!-- Add Bot Modal -->
+    <div class="modal" id="add-bot-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🤖 Add New Telegram Bot</h3>
+                <button class="modal-close" type="button">&times;</button>
+            </div>
+            <form method="POST" action="/bots" id="add-bot-form">
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Configure a Telegram bot to receive webhook messages.</p>
+                    
+                    <div class="form-group">
+                        <label for="add-bot_name">Bot Name</label>
+                        <input type="text" id="add-bot_name" name="bot_name" required placeholder="e.g., My Notification Bot">
+                        <small style="color: var(--text-muted);">A friendly name to identify this bot</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="add-bot_token">Bot Token</label>
+                        <input type="text" id="add-bot_token" name="bot_token" required placeholder="e.g., 123456789:ABCdefGhIJKlmNOpqrsTUVwxyZ">
+                        <small style="color: var(--text-muted);">Get this from @BotFather on Telegram</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="add-chat_id">Chat ID</label>
+                        <input type="text" id="add-chat_id" name="chat_id" required placeholder="e.g., -1001234567890 or 123456789">
+                        <small style="color: var(--text-muted);">The chat/channel/group ID where messages will be sent</small>
+                    </div>
+                    
+                    <div id="add-test-result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-test" id="add-test-btn">🧪 Test Bot</button>
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                    <button type="submit" class="btn">Add Bot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Bot Modal -->
+    <div class="modal" id="edit-bot-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🛠️ Edit Telegram Bot</h3>
+                <button class="modal-close" type="button">&times;</button>
+            </div>
+            <form method="POST" id="edit-bot-form">
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Update your Telegram bot configuration.</p>
+                    
+                    <div class="form-group">
+                        <label for="edit-bot_name">Bot Name</label>
+                        <input type="text" id="edit-bot_name" name="bot_name" required placeholder="e.g., My Notification Bot">
+                        <small style="color: var(--text-muted);">A friendly name to identify this bot</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-bot_token">Bot Token</label>
+                        <input type="text" id="edit-bot_token" name="bot_token" required placeholder="e.g., 123456789:ABCdefGhIJKlmNOpqrsTUVwxyZ">
+                        <small style="color: var(--text-muted);">Get this from @BotFather on Telegram</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-chat_id">Chat ID</label>
+                        <input type="text" id="edit-chat_id" name="chat_id" required placeholder="e.g., -1001234567890 or 123456789">
+                        <small style="color: var(--text-muted);">The chat/channel/group ID where messages will be sent</small>
+                    </div>
+                    
+                    <div id="edit-test-result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-test" id="edit-test-btn">🧪 Test Bot</button>
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                    <button type="submit" class="btn">Update Bot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="/js/theme-manager.js"></script>
+    <script>
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const modals = document.querySelectorAll('.modal');
+            const addBtn = document.querySelector('[data-modal="add-bot-modal"]');
+            const closeBtns = document.querySelectorAll('.modal-close, .modal-cancel');
+            
+            // Open modal
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    const modalId = this.getAttribute('data-modal');
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.classList.add('show');
+                        // Clear form and test results
+                        const form = modal.querySelector('form');
+                        if (form) form.reset();
+                        const testResult = modal.querySelector('[id$="-test-result"]');
+                        if (testResult) testResult.innerHTML = '';
+                    }
+                });
+            }
+            
+            // Close modal
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Close modal on outside click
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Test bot functionality
+            function setupTestButton(testBtnId, formId, resultId) {
+                const testBtn = document.getElementById(testBtnId);
+                const form = document.getElementById(formId);
+                const resultDiv = document.getElementById(resultId);
+                
+                if (!testBtn || !form || !resultDiv) return;
+                
+                testBtn.addEventListener('click', async function() {
+                    const botToken = form.querySelector('[name="bot_token"]').value.trim();
+                    const chatId = form.querySelector('[name="chat_id"]').value.trim();
+                    
+                    if (!botToken || !chatId) {
+                        resultDiv.innerHTML = '<div class="test-result error">⚠️ Please fill in both Bot Token and Chat ID before testing.</div>';
+                        return;
+                    }
+                    
+                    // Disable button and show loading
+                    testBtn.disabled = true;
+                    testBtn.textContent = '🔄 Testing...';
+                    resultDiv.innerHTML = '';
+                    
+                    try {
+                        const response = await fetch('/bots/test', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                bot_token: botToken,
+                                chat_id: chatId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            resultDiv.innerHTML = `<div class="test-result success">✅ ${result.message}</div>`;
+                        } else {
+                            resultDiv.innerHTML = `<div class="test-result error">❌ ${result.error}</div>`;
+                        }
+                    } catch (error) {
+                        resultDiv.innerHTML = `<div class="test-result error">❌ Network error: ${error.message}</div>`;
+                    } finally {
+                        // Re-enable button
+                        testBtn.disabled = false;
+                        testBtn.textContent = '🧪 Test Bot';
+                    }
+                });
+            }
+            
+            // Setup test buttons
+            setupTestButton('add-test-btn', 'add-bot-form', 'add-test-result');
+            setupTestButton('edit-test-btn', 'edit-bot-form', 'edit-test-result');
+        });
+        
+        // Edit bot function
+        async function editBot(botId) {
+            try {
+                const response = await fetch(`/bots/${botId}/edit`);
+                const bot = await response.json();
+                
+                if (bot.error) {
+                    alert('Error loading bot data: ' + bot.error);
+                    return;
+                }
+                
+                // Populate edit form
+                document.getElementById('edit-bot_name').value = bot.bot_name || '';
+                document.getElementById('edit-bot_token').value = bot.bot_token || '';
+                document.getElementById('edit-chat_id').value = bot.chat_id || '';
+                
+                // Set form action
+                document.getElementById('edit-bot-form').action = `/bots/${botId}/edit`;
+                
+                // Clear test results
+                document.getElementById('edit-test-result').innerHTML = '';
+                
+                // Show modal
+                document.getElementById('edit-bot-modal').classList.add('show');
+            } catch (error) {
+                alert('Error loading bot data: ' + error.message);
+            }
+        }
+        
+        // Make editBot function globally available
+        window.editBot = editBot;
+    </script>
 </body>
 </html>

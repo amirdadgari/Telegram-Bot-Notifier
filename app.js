@@ -46,6 +46,7 @@ db.serialize(() => {
     name VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT 1,
+    send_to_all BOOLEAN DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
 
@@ -60,6 +61,22 @@ db.serialize(() => {
     is_active BOOLEAN DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
+
+  // Token-Bot assignments table
+  db.run(`CREATE TABLE IF NOT EXISTS token_bot_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_id INTEGER,
+    bot_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (token_id) REFERENCES tokens (id) ON DELETE CASCADE,
+    FOREIGN KEY (bot_id) REFERENCES telegram_bots (id) ON DELETE CASCADE,
+    UNIQUE(token_id, bot_id)
+  )`);
+
+  // Add send_to_all column to existing tokens table if it doesn't exist
+  db.run(`ALTER TABLE tokens ADD COLUMN send_to_all BOOLEAN DEFAULT 0`, (err) => {
+    // Ignore error if column already exists
+  });
 
   // Create admin user if not exists
   db.get("SELECT * FROM users WHERE username = 'admin'", (err, row) => {
@@ -218,30 +235,97 @@ app.post('/change-password', requireAuth, (req, res) => {
 
 // Tokens page
 app.get('/tokens', requireAuth, (req, res) => {
+  // Get all tokens for the user
   db.all(
     "SELECT * FROM tokens WHERE user_id = ? ORDER BY created_at DESC",
     [req.session.userId],
     (err, tokens) => {
       if (err) {
-        return res.render('tokens', { tokens: [], error: 'Database error' });
+        return res.render('tokens', { 
+          tokens: [], 
+          bots: [],
+          error: 'Database error',
+          username: req.session.username,
+          isAdmin: req.session.isAdmin
+        });
       }
-      res.render('tokens', { tokens, error: null });
+      
+      // Get all bots for the user
+      db.all(
+        "SELECT * FROM telegram_bots WHERE user_id = ? AND is_active = 1 ORDER BY bot_name",
+        [req.session.userId],
+        (err, bots) => {
+          if (err) {
+            return res.render('tokens', { 
+              tokens: [], 
+              bots: [],
+              error: 'Database error',
+              username: req.session.username,
+              isAdmin: req.session.isAdmin
+            });
+          }
+          
+          // Get bot assignments for each token
+          const tokenPromises = tokens.map(token => {
+            return new Promise((resolve) => {
+              db.all(
+                "SELECT tb.* FROM telegram_bots tb JOIN token_bot_assignments tba ON tb.id = tba.bot_id WHERE tba.token_id = ?",
+                [token.id],
+                (err, assignedBots) => {
+                  token.assignedBots = err ? [] : assignedBots;
+                  resolve(token);
+                }
+              );
+            });
+          });
+          
+          Promise.all(tokenPromises).then(tokensWithBots => {
+            res.render('tokens', { 
+              tokens: tokensWithBots, 
+              bots,
+              error: req.query.error || null,
+              username: req.session.username,
+              isAdmin: req.session.isAdmin
+            });
+          });
+        }
+      );
     }
   );
 });
 
 app.post('/tokens', requireAuth, (req, res) => {
-  const { name } = req.body;
+  const { name, sendToAll, botIds } = req.body;
   const token = uuidv4();
   
   db.run(
-    "INSERT INTO tokens (user_id, token, name) VALUES (?, ?, ?)",
-    [req.session.userId, token, name],
-    (err) => {
+    "INSERT INTO tokens (user_id, token, name, send_to_all) VALUES (?, ?, ?, ?)",
+    [req.session.userId, token, name, sendToAll ? 1 : 0],
+    function(err) {
       if (err) {
         return res.redirect('/tokens?error=Error creating token');
       }
-      res.redirect('/tokens');
+      
+      const tokenId = this.lastID;
+      
+      // If not send_to_all, assign specific bots
+      if (!sendToAll && botIds && Array.isArray(botIds)) {
+        const assignments = botIds.map(botId => {
+          return new Promise((resolve) => {
+            db.run(
+              "INSERT INTO token_bot_assignments (token_id, bot_id) VALUES (?, ?)",
+              [tokenId, botId],
+              (err) => resolve()
+            );
+          });
+        });
+        
+        Promise.all(assignments).then(() => {
+          res.redirect('/tokens');
+        });
+      } else {
+        res.redirect('/tokens');
+      }
     }
   );
 });
@@ -259,6 +343,160 @@ app.post('/tokens/:id/delete', requireAuth, (req, res) => {
   );
 });
 
+// Get token for editing
+app.get('/tokens/:id/edit', requireAuth, (req, res) => {
+  db.get(
+    "SELECT * FROM tokens WHERE id = ? AND user_id = ?",
+    [req.params.id, req.session.userId],
+    (err, token) => {
+      if (err || !token) {
+        return res.status(404).json({ error: 'Token not found' });
+      }
+      
+      // Get assigned bots
+      db.all(
+        "SELECT bot_id FROM token_bot_assignments WHERE token_id = ?",
+        [token.id],
+        (err, assignments) => {
+          const assignedBotIds = err ? [] : assignments.map(a => a.bot_id);
+          res.json({ 
+            ...token, 
+            assignedBotIds 
+          });
+        }
+      );
+    }
+  );
+});
+
+// Update token bot assignments
+app.post('/tokens/:id/edit', requireAuth, (req, res) => {
+  const { name, sendToAll, botIds } = req.body;
+  
+  db.run(
+    "UPDATE tokens SET name = ?, send_to_all = ? WHERE id = ? AND user_id = ?",
+    [name, sendToAll ? 1 : 0, req.params.id, req.session.userId],
+    (err) => {
+      if (err) {
+        return res.json({ success: false, error: 'Error updating token' });
+      }
+      
+      // Clear existing assignments
+      db.run(
+        "DELETE FROM token_bot_assignments WHERE token_id = ?",
+        [req.params.id],
+        (err) => {
+          if (err) {
+            return res.json({ success: false, error: 'Error updating assignments' });
+          }
+          
+          // Add new assignments if not send_to_all
+          if (!sendToAll && botIds && Array.isArray(botIds)) {
+            const assignments = botIds.map(botId => {
+              return new Promise((resolve) => {
+                db.run(
+                  "INSERT INTO token_bot_assignments (token_id, bot_id) VALUES (?, ?)",
+                  [req.params.id, botId],
+                  (err) => resolve()
+                );
+              });
+            });
+            
+            Promise.all(assignments).then(() => {
+              res.json({ success: true });
+            });
+          } else {
+            res.json({ success: true });
+          }
+        }
+      );
+    }
+  );
+});
+
+// Test token by sending message to assigned bots
+app.post('/tokens/:id/test', requireAuth, (req, res) => {
+  db.get(
+    "SELECT * FROM tokens WHERE id = ? AND user_id = ?",
+    [req.params.id, req.session.userId],
+    (err, token) => {
+      if (err || !token) {
+        return res.json({ success: false, error: 'Token not found' });
+      }
+      
+      let botQuery;
+      let botParams;
+      
+      if (token.send_to_all) {
+        // Send to all active bots
+        botQuery = "SELECT * FROM telegram_bots WHERE user_id = ? AND is_active = 1";
+        botParams = [req.session.userId];
+      } else {
+        // Send to assigned bots only
+        botQuery = `
+          SELECT tb.* FROM telegram_bots tb 
+          JOIN token_bot_assignments tba ON tb.id = tba.bot_id 
+          WHERE tba.token_id = ? AND tb.is_active = 1
+        `;
+        botParams = [token.id];
+      }
+      
+      db.all(botQuery, botParams, async (err, bots) => {
+        if (err) {
+          return res.json({ success: false, error: 'Database error' });
+        }
+        
+        if (bots.length === 0) {
+          return res.json({ success: false, error: 'No bots assigned to this token' });
+        }
+        
+        const testMessage = `🧪 Test message from token "${token.name}"\n\n⏰ Sent at: ${new Date().toLocaleString()}`;
+        const results = [];
+        
+        for (const bot of bots) {
+          try {
+            const response = await fetch(`https://api.telegram.org/bot${bot.bot_token}/sendMessage`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                chat_id: bot.chat_id,
+                text: testMessage
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+              results.push({ botName: bot.bot_name || `Bot ${bot.id}`, success: true });
+            } else {
+              results.push({ 
+                botName: bot.bot_name || `Bot ${bot.id}`, 
+                success: false, 
+                error: result.description || 'Unknown error' 
+              });
+            }
+          } catch (error) {
+            results.push({ 
+              botName: bot.bot_name || `Bot ${bot.id}`, 
+              success: false, 
+              error: error.message 
+            });
+          }
+        }
+        
+        const successCount = results.filter(r => r.success).length;
+        res.json({ 
+          success: successCount > 0, 
+          results,
+          message: `Test completed: ${successCount}/${results.length} bots sent successfully`
+        });
+      });
+    }
+  );
+});
+
 // Telegram bots page
 app.get('/bots', requireAuth, (req, res) => {
   db.all(
@@ -266,9 +504,19 @@ app.get('/bots', requireAuth, (req, res) => {
     [req.session.userId],
     (err, bots) => {
       if (err) {
-        return res.render('bots', { bots: [], error: 'Database error' });
+        return res.render('bots', { 
+          bots: [], 
+          error: 'Database error',
+          username: req.session.username,
+          isAdmin: req.session.isAdmin
+        });
       }
-      res.render('bots', { bots, error: null });
+      res.render('bots', { 
+        bots, 
+        error: null,
+        username: req.session.username,
+        isAdmin: req.session.isAdmin
+      });
     }
   );
 });
@@ -288,6 +536,72 @@ app.post('/bots', requireAuth, (req, res) => {
   );
 });
 
+// Get bot data for editing
+app.get('/bots/:id/edit', requireAuth, (req, res) => {
+  db.get(
+    "SELECT * FROM telegram_bots WHERE id = ? AND user_id = ?",
+    [req.params.id, req.session.userId],
+    (err, bot) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      if (!bot) {
+        return res.status(404).json({ error: 'Bot not found' });
+      }
+      
+      res.json(bot);
+    }
+  );
+});
+
+// Update bot
+app.post('/bots/:id/edit', requireAuth, (req, res) => {
+  const { bot_name, bot_token, chat_id } = req.body;
+  
+  db.run(
+    "UPDATE telegram_bots SET bot_name = ?, bot_token = ?, chat_id = ? WHERE id = ? AND user_id = ?",
+    [bot_name, bot_token, chat_id, req.params.id, req.session.userId],
+    (err) => {
+      if (err) {
+        return res.redirect('/bots?error=Error updating bot');
+      }
+      res.redirect('/bots');
+    }
+  );
+});
+
+// Test bot configuration
+app.post('/bots/test', requireAuth, async (req, res) => {
+  const { bot_token, chat_id } = req.body;
+  
+  if (!bot_token || !chat_id) {
+    return res.status(400).json({ error: 'Bot token and chat ID are required' });
+  }
+  
+  try {
+    const telegramUrl = `https://api.telegram.org/bot${bot_token}/sendMessage`;
+    const testMessage = '🧪 Test message from Telegram Bot Notifier!';
+    
+    const response = await axios.post(telegramUrl, {
+      chat_id: chat_id,
+      text: testMessage,
+      parse_mode: 'HTML'
+    });
+    
+    res.json({
+      success: true,
+      message: 'Test message sent successfully!',
+      message_id: response.data.result.message_id
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.response?.data?.description || error.message
+    });
+  }
+});
+
 app.post('/bots/:id/delete', requireAuth, (req, res) => {
   db.run(
     "DELETE FROM telegram_bots WHERE id = ? AND user_id = ?",
@@ -305,9 +619,19 @@ app.post('/bots/:id/delete', requireAuth, (req, res) => {
 app.get('/users', requireAuth, requireAdmin, (req, res) => {
   db.all("SELECT id, username, is_admin, created_at FROM users", (err, users) => {
     if (err) {
-      return res.render('users', { users: [], error: 'Database error' });
+      return res.render('users', { 
+        users: [], 
+        error: 'Database error',
+        username: req.session.username,
+        isAdmin: req.session.isAdmin
+      });
     }
-    res.render('users', { users, error: null });
+    res.render('users', { 
+      users, 
+      error: null,
+      username: req.session.username,
+      isAdmin: req.session.isAdmin
+    });
   });
 });
 
@@ -379,20 +703,34 @@ app.post('/api/send', async (req, res) => {
           return res.status(401).json({ error: 'Invalid token' });
         }
         
-        // Get user's telegram bots
-        db.all(
-          "SELECT * FROM telegram_bots WHERE user_id = ? AND is_active = 1",
-          [tokenData.user_id],
-          async (err, bots) => {
+        // Get bots based on token assignment
+        let botQuery;
+        let botParams;
+        
+        if (tokenData.send_to_all) {
+          // Send to all active bots
+          botQuery = "SELECT * FROM telegram_bots WHERE user_id = ? AND is_active = 1";
+          botParams = [tokenData.user_id];
+        } else {
+          // Send to assigned bots only
+          botQuery = `
+            SELECT tb.* FROM telegram_bots tb 
+            JOIN token_bot_assignments tba ON tb.id = tba.bot_id 
+            WHERE tba.token_id = ? AND tb.is_active = 1
+          `;
+          botParams = [tokenData.id];
+        }
+        
+        db.all(botQuery, botParams, async (err, bots) => {
             if (err) {
               return res.status(500).json({ error: 'Database error' });
             }
             
             if (bots.length === 0) {
-              return res.status(400).json({ error: 'No active Telegram bots configured' });
+              return res.status(400).json({ error: 'No bots assigned to this token or no active bots available' });
             }
             
-            // Send message to all user's bots
+            // Send message to assigned bots
             const results = [];
             for (const bot of bots) {
               try {
