@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Telegram Bot Notifier</title>
+    <link rel="stylesheet" href="/css/themes.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+        
+        .nav {
+            background: white;
+            padding: 0 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 0;
+        }
+        
+        .nav li a {
+            display: block;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav li a:hover,
+        .nav li a.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.8rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .admin-only {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 Telegram Bot Notifier</h1>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Theme Toggle -->
+            <div class="theme-toggle">
+                <button class="theme-toggle-btn" id="theme-toggle-btn">
+                    <span id="theme-icon">🖥️</span>
+                    <span id="theme-text">System</span>
+                    <span style="margin-left: 0.3rem;">▼</span>
+                </button>
+                <div class="theme-dropdown" id="theme-dropdown">
+                    <div class="theme-option" data-theme="system">
+                        <span>🖥️</span>
+                        <span>System</span>
+                    </div>
+                    <div class="theme-option" data-theme="light">
+                        <span>☀️</span>
+                        <span>Light</span>
+                    </div>
+                    <div class="theme-option" data-theme="dark">
+                        <span>🌙</span>
+                        <span>Dark</span>
+                    </div>
+                </div>
+            </div>
+            <a href="/logout" class="btn btn-secondary">Logout</a>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/tokens">Access Tokens</a></li>
+            <li><a href="/bots">Telegram Bots</a></li>
+            <li><a href="/users" class="active">Users</a></li>
+            <li><a href="/change-password">Change Password</a></li>
+        </ul>
+    </nav>
+    
+    <div class="container">
+        <div class="admin-only">
+            <h4>⚠️ Administrator Access</h4>
+            <p>This page is only accessible to administrators. Here you can manage all users in the system.</p>
+        </div>
+        
+        <div class="card">
+            <h2>👤 Add New User</h2>
+            <p style="color: #666; margin-bottom: 1.5rem;">Create a new user account. Each user can have their own access tokens and Telegram bots.</p>
+            
+            <form method="POST" action="/users">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required placeholder="Enter username">
+                    <small style="color: #666;">Username must be unique</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter password" minlength="6">
+                    <small style="color: #666;">Password must be at least 6 characters long</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="is_admin" name="is_admin">
+                        <label for="is_admin">Administrator privileges</label>
+                    </div>
+                    <small style="color: #666;">Administrators can manage users and access all system features</small>
+                </div>
+                
+                <button type="submit" class="btn">Create User</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h2>System Users</h2>
+            
+            <% if (error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+            
+            <% if (users.length === 0) { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">👥</div>
+                    <h3>No Users Found</h3>
+                    <p>There are no users in the system.</p>
+                </div>
+            <% } else { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(user => { %>
+                            <tr>
+                                <td>
+                                    <%= user.username %>
+                                    <% if (user.username === 'admin') { %>
+                                        <span style="color: #666; font-size: 0.9rem;">(Default Admin)</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (user.is_admin) { %>
+                                        <span class="admin-badge">Administrator</span>
+                                    <% } else { %>
+                                        User
+                                    <% } %>
+                                </td>
+                                <td><%= new Date(user.created_at).toLocaleDateString() %></td>
+                                <td>
+                                    <% if (user.username !== 'admin' || users.length > 1) { %>
+                                        <form method="POST" action="/users/<%= user.id %>/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This will also delete all their tokens and bot configurations.')">
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    <% } else { %>
+                                        <span style="color: #666; font-style: italic;">Cannot delete last admin</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 5px; color: #666;">
+                    <h4>User Management Notes:</h4>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Each user has their own isolated set of access tokens and Telegram bots</li>
+                        <li>Users can only see and manage their own tokens and bots</li>
+                        <li>Administrators can access all system features including this user management page</li>
+                        <li>Deleting a user will permanently remove all their tokens and bot configurations</li>
+                        <li>The system requires at least one administrator account</li>
+                    </ul>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <script src="/js/theme-manager.js"></script>
+</body>
+</html>

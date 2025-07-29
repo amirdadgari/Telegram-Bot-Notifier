@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Telegram Bot Notifier</title>
+    <link rel="stylesheet" href="/css/themes.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+        }
+        
+        .default-creds {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .default-creds h4 {
+            color: #155724;
+            margin-bottom: 0.5rem;
+        }
+        
+        .default-creds p {
+            color: #155724;
+            font-size: 0.9rem;
+            margin: 0.3rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div style="position: absolute; top: 1rem; right: 1rem; z-index: 1000;">
+        <div class="theme-toggle">
+            <button class="theme-toggle-btn" id="theme-toggle-btn">
+                <span id="theme-icon">🖥️</span>
+                <span id="theme-text">System</span>
+                <span style="margin-left: 0.3rem;">▼</span>
+            </button>
+            <div class="theme-dropdown" id="theme-dropdown">
+                <div class="theme-option" data-theme="system">
+                    <span>🖥️</span>
+                    <span>System</span>
+                </div>
+                <div class="theme-option" data-theme="light">
+                    <span>☀️</span>
+                    <span>Light</span>
+                </div>
+                <div class="theme-option" data-theme="dark">
+                    <span>🌙</span>
+                    <span>Dark</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="login-container">
+        <div class="logo">
+            <h1>📱 Telegram Bot Notifier</h1>
+            <p>Webhook to Telegram Message System</p>
+        </div>
+        
+        <% if (error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+        
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+        
+        <div class="default-creds">
+            <h4>Default Admin Credentials:</h4>
+            <p><strong>Username:</strong> admin</p>
+            <p><strong>Password:</strong> changeme</p>
+            <p><em>You'll be asked to change the password after first login.</em></p>
+        </div>
+    </div>
+    
+    <script src="/js/theme-manager.js"></script>
+</body>
+</html>
