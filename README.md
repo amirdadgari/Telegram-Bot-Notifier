@@ -3,11 +3,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-supported-blue.svg)](https://www.docker.com/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-A powerful webhook-to-Telegram notification system with Node.js backend, SQLite database, and a beautiful responsive web UI with dark mode support. Send messages to Telegram chats via REST API endpoints with secure authentication and multi-user management.
-
-![Telegram Bot Notifier Demo](https://via.placeholder.com/800x400/667eea/ffffff?text=Telegram+Bot+Notifier)
+A powerful webhook-to-Telegram notification system with Node.js backend, SQLite database, and a beautiful responsive web UI with dark mode support! Send messages to Telegram chats via REST API endpoints with secure authentication and multi-user management.
 
 ## ⭐ Star this Repository
 
