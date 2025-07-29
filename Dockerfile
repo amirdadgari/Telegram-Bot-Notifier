@@ -15,7 +15,7 @@ FROM node:18-alpine AS production
 
 # Install security updates and required packages
 RUN apk update && apk upgrade && \
-    apk add --no-cache dumb-init && \
+    apk add --no-cache dumb-init su-exec && \
     rm -rf /var/cache/apk/*
 
 # Set working directory
@@ -34,31 +34,32 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy application files
 COPY --chown=nodeuser:nodejs . .
 
+# Copy and set permissions for entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create directory for SQLite database with proper permissions
-RUN mkdir -p /app/data && \
-    chown -R nodeuser:nodejs /app/data && \
-    chmod 755 /app/data
+RUN mkdir -p /app/data /app/logs && \
+    chown -R nodeuser:nodejs /app/data /app/logs && \
+    chmod 755 /app/data /app/logs
 
 # Remove unnecessary files
-RUN rm -rf .git .github netlify .env.example README.md CONTRIBUTING.md
+RUN rm -rf .git .github netlify .env.example README.md CONTRIBUTING.md docker-entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV DATABASE_PATH=/app/data/database.db
 
-# Switch to non-root user
-USER nodeuser
-
 # Expose port
 EXPOSE 3000
 
-# Add healthcheck
+# Add healthcheck (run as nodeuser)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+    CMD su-exec nodeuser node -e "require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
+# Use entrypoint script to handle permissions and user switching
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-# Start the application
-CMD ["node", "start.js"]
+# Start the application (will be run as nodeuser by entrypoint)
+CMD ["dumb-init", "--", "node", "start.js"]

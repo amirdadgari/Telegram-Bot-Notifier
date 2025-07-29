@@ -257,6 +257,11 @@ docker-compose -f docker-compose.prod.yml restart nginx
    
    # Fix data directory permissions
    sudo chmod 755 data
+   
+   # Docker permission issues
+   docker-compose -f docker-compose.prod.yml down
+   docker volume rm webhook-to-telegram_data
+   docker-compose -f docker-compose.prod.yml up -d
    ```
 
 3. **Database connection issues**

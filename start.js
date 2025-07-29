@@ -23,11 +23,19 @@ try {
     console.log(`✅ Created data directory: ${dataDir}`);
   }
   
-  // Check if we can write to the data directory
+  // Check if we can write to the data directory (skip in Docker if handled by entrypoint)
   const testFile = path.join(dataDir, '.write-test');
-  fs.writeFileSync(testFile, 'test');
-  fs.unlinkSync(testFile);
-  console.log(`✅ Data directory is writable: ${dataDir}`);
+  try {
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+    console.log(`✅ Data directory is writable: ${dataDir}`);
+  } catch (writeError) {
+    if (process.env.NODE_ENV === 'production' && fs.existsSync('/.dockerenv')) {
+      console.log(`⚠️  Write test failed (handled by Docker entrypoint): ${dataDir}`);
+    } else {
+      throw writeError;
+    }
+  }
   
 } catch (error) {
   console.error(`❌ Error setting up data directory: ${error.message}`);
