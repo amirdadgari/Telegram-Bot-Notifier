@@ -239,3 +239,6 @@ config/production.json
 # Backup files
 *.bak
 *.backup
+
+
+docker-compose.yml
