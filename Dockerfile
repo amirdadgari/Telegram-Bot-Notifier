@@ -32,7 +32,7 @@ COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
 # copy public directory
-COPY public ./public
+COPY --from=builder /app/public ./public
 
 # Copy application files
 COPY --chown=nodeuser:nodejs . .
