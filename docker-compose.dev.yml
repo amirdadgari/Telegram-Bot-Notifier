@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  webhook-to-telegram:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: webhook-to-telegram:dev
+    container_name: webhook-to-telegram-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs:rw
+      # Mount source code for development (optional)
+      # - .:/app
+      # - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_PATH=/app/data/database.db
+      - SESSION_SECRET=dev-session-secret-change-in-production
+      - TRUST_PROXY=false
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - webhook-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  data:
+    driver: local
+
+networks:
+  webhook-network:
+    driver: bridge

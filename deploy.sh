@@ -109,6 +109,31 @@ deploy_with_nginx() {
     log_info "Deployment with nginx completed"
 }
 
+deploy_development() {
+    log_info "Deploying for development..."
+    
+    # Use development compose file
+    COMPOSE_FILE="docker-compose.dev.yml"
+    
+    # Pull latest images
+    log_info "Pulling latest base images..."
+    docker-compose -f $COMPOSE_FILE pull
+    
+    # Build the application
+    log_info "Building application..."
+    docker-compose -f $COMPOSE_FILE build --no-cache
+    
+    # Stop existing containers
+    log_info "Stopping existing containers..."
+    docker-compose -f $COMPOSE_FILE down
+    
+    # Start new containers
+    log_info "Starting development containers..."
+    docker-compose -f $COMPOSE_FILE up -d
+    
+    log_info "Development deployment completed"
+}
+
 show_status() {
     log_info "Checking deployment status..."
     
@@ -150,6 +175,7 @@ show_help() {
     echo "  -c, --check    Check requirements only"
     echo "  -b, --build    Build and deploy without nginx"
     echo "  -n, --nginx    Deploy with nginx reverse proxy"
+    echo "  -d, --dev      Deploy for development"
     echo "  -s, --status   Show deployment status"
     echo "  -l, --logs     Show container logs"
     echo "  --cleanup      Clean up Docker resources"
@@ -174,6 +200,11 @@ case "$1" in
         check_requirements
         setup_environment
         deploy_with_nginx
+        ;;
+    -d|--dev)
+        check_requirements
+        setup_environment
+        deploy_development
         ;;
     -s|--status)
         show_status

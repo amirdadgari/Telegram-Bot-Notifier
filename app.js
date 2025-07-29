@@ -34,7 +34,23 @@ app.use(session({
 }));
 
 // Database setup
-const db = new sqlite3.Database('./database.db');
+const fs = require('fs');
+const DATABASE_PATH = process.env.DATABASE_PATH || './data/database.db';
+
+// Ensure data directory exists
+const dataDir = require('path').dirname(DATABASE_PATH);
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  console.log(`Created data directory: ${dataDir}`);
+}
+
+const db = new sqlite3.Database(DATABASE_PATH, (err) => {
+  if (err) {
+    console.error('Error opening database:', err.message);
+    process.exit(1);
+  }
+  console.log(`Connected to SQLite database at ${DATABASE_PATH}`);
+});
 
 // Initialize database tables
 db.serialize(() => {
