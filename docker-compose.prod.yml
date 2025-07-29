@@ -2,23 +2,67 @@ version: '3.8'
 
 services:
   webhook-to-telegram:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: webhook-to-telegram:latest
     container_name: webhook-to-telegram
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - data:/app/data
+      - ./logs:/app/logs:rw
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - SESSION_SECRET=your-super-secret-session-key-change-in-production
+      - DATABASE_PATH=/app/data/database.db
+      - TRUST_PROXY=true
+    env_file:
+      - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - webhook-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Set to true if app doesn't need to write files
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Add nginx reverse proxy
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: webhook-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx:rw
+    depends_on:
+      webhook-to-telegram:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - webhook-network
+    profiles:
+      - nginx  # Only start with --profile nginx
 
 volumes:
   data:
+    driver: local
+
+networks:
+  webhook-network:
+    driver: bridge
