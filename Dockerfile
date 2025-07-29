@@ -31,6 +31,9 @@ COPY package*.json ./
 # Copy node_modules from builder stage
 COPY --from=builder /app/node_modules ./node_modules
 
+# copy public directory
+COPY public ./public
+
 # Copy application files
 COPY --chown=nodeuser:nodejs . .
 
