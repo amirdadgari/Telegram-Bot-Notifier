@@ -210,14 +210,6 @@
             margin-bottom: 0.5rem;
         }
         
-        .bot-token {
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            background: var(--bg-secondary);
-            padding: 0.5rem;
-            border-radius: 3px;
-            word-break: break-all;
-        }
         
         /* Modal Styles */
         .modal {
@@ -528,8 +520,8 @@
                     <thead>
                         <tr>
                             <th>Bot Name</th>
-                            <th>Bot Token</th>
-                            <th>Chat ID</th>
+                            <th>Silent Time</th>
+                            <th>Pause Time</th>
                             <th>Created</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -540,11 +532,19 @@
                             <tr>
                                 <td><%= bot.bot_name || 'Unnamed Bot' %></td>
                                 <td>
-                                    <div class="bot-token">
-                                        <%= bot.bot_token.substring(0, 20) %>...
-                                    </div>
+                                    <% if (bot.silent_enabled) { %>
+                                        <span style="color: #f39c12; font-size: 0.9rem;">🔇 <%= bot.silent_start_time %> - <%= bot.silent_end_time %></span>
+                                    <% } else { %>
+                                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Disabled</span>
+                                    <% } %>
                                 </td>
-                                <td><code><%= bot.chat_id %></code></td>
+                                <td>
+                                    <% if (bot.paused_enabled) { %>
+                                        <span style="color: #e74c3c; font-size: 0.9rem;">⏸️ <%= bot.paused_start_time %> - <%= bot.paused_end_time %></span>
+                                    <% } else { %>
+                                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Disabled</span>
+                                    <% } %>
+                                </td>
                                 <td><%= new Date(bot.created_at).toLocaleDateString() %></td>
                                 <td>
                                     <% if (bot.is_active) { %>
