@@ -85,8 +85,22 @@ db.serialize(() => {
     bot_name VARCHAR(255),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT 1,
+    silent_enabled BOOLEAN DEFAULT 0,
+    silent_start_time VARCHAR(5),
+    silent_end_time VARCHAR(5),
+    paused_enabled BOOLEAN DEFAULT 0,
+    paused_start_time VARCHAR(5),
+    paused_end_time VARCHAR(5),
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
+
+  // Add new scheduling columns to existing telegram_bots table if they don't exist
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN silent_enabled BOOLEAN DEFAULT 0`, () => {});
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN silent_start_time VARCHAR(5)`, () => {});
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN silent_end_time VARCHAR(5)`, () => {});
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN paused_enabled BOOLEAN DEFAULT 0`, () => {});
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN paused_start_time VARCHAR(5)`, () => {});
+  db.run(`ALTER TABLE telegram_bots ADD COLUMN paused_end_time VARCHAR(5)`, () => {});
 
   // Token-Bot assignments table
   db.run(`CREATE TABLE IF NOT EXISTS token_bot_assignments (
@@ -128,6 +142,45 @@ db.serialize(() => {
     }
   });
 });
+
+// Helper functions for scheduling
+function isTimeInRange(startTime, endTime) {
+  if (!startTime || !endTime) return false;
+  
+  const now = new Date();
+  const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+  
+  // Handle overnight time ranges (e.g., 22:00 - 06:00)
+  if (startTime > endTime) {
+    return currentTime >= startTime || currentTime <= endTime;
+  } else {
+    return currentTime >= startTime && currentTime <= endTime;
+  }
+}
+
+function getBotStatus(bot) {
+  const now = new Date();
+  const status = {
+    shouldSendMessage: true,
+    shouldSendSilent: false,
+    reason: null
+  };
+  
+  // Check if paused
+  if (bot.paused_enabled && isTimeInRange(bot.paused_start_time, bot.paused_end_time)) {
+    status.shouldSendMessage = false;
+    status.reason = `Bot is paused (${bot.paused_start_time} - ${bot.paused_end_time})`;
+    return status;
+  }
+  
+  // Check if should be silent
+  if (bot.silent_enabled && isTimeInRange(bot.silent_start_time, bot.silent_end_time)) {
+    status.shouldSendSilent = true;
+    status.reason = `Silent mode (${bot.silent_start_time} - ${bot.silent_end_time})`;
+  }
+  
+  return status;
+}
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
@@ -548,11 +601,36 @@ app.get('/bots', requireAuth, (req, res) => {
 });
 
 app.post('/bots', requireAuth, (req, res) => {
-  const { bot_name, bot_token, chat_id } = req.body;
+  const { 
+    bot_name, 
+    bot_token, 
+    chat_id, 
+    silent_enabled, 
+    silent_start_time, 
+    silent_end_time, 
+    paused_enabled, 
+    paused_start_time, 
+    paused_end_time 
+  } = req.body;
   
   db.run(
-    "INSERT INTO telegram_bots (user_id, bot_token, chat_id, bot_name) VALUES (?, ?, ?, ?)",
-    [req.session.userId, bot_token, chat_id, bot_name],
+    `INSERT INTO telegram_bots (
+      user_id, bot_token, chat_id, bot_name, 
+      silent_enabled, silent_start_time, silent_end_time,
+      paused_enabled, paused_start_time, paused_end_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      req.session.userId, 
+      bot_token, 
+      chat_id, 
+      bot_name,
+      silent_enabled ? 1 : 0,
+      silent_enabled ? silent_start_time : null,
+      silent_enabled ? silent_end_time : null,
+      paused_enabled ? 1 : 0,
+      paused_enabled ? paused_start_time : null,
+      paused_enabled ? paused_end_time : null
+    ],
     (err) => {
       if (err) {
         return res.redirect('/bots?error=Error creating bot');
@@ -583,11 +661,37 @@ app.get('/bots/:id/edit', requireAuth, (req, res) => {
 
 // Update bot
 app.post('/bots/:id/edit', requireAuth, (req, res) => {
-  const { bot_name, bot_token, chat_id } = req.body;
+  const { 
+    bot_name, 
+    bot_token, 
+    chat_id, 
+    silent_enabled, 
+    silent_start_time, 
+    silent_end_time, 
+    paused_enabled, 
+    paused_start_time, 
+    paused_end_time 
+  } = req.body;
   
   db.run(
-    "UPDATE telegram_bots SET bot_name = ?, bot_token = ?, chat_id = ? WHERE id = ? AND user_id = ?",
-    [bot_name, bot_token, chat_id, req.params.id, req.session.userId],
+    `UPDATE telegram_bots SET 
+      bot_name = ?, bot_token = ?, chat_id = ?,
+      silent_enabled = ?, silent_start_time = ?, silent_end_time = ?,
+      paused_enabled = ?, paused_start_time = ?, paused_end_time = ?
+      WHERE id = ? AND user_id = ?`,
+    [
+      bot_name, 
+      bot_token, 
+      chat_id,
+      silent_enabled ? 1 : 0,
+      silent_enabled ? silent_start_time : null,
+      silent_enabled ? silent_end_time : null,
+      paused_enabled ? 1 : 0,
+      paused_enabled ? paused_start_time : null,
+      paused_enabled ? paused_end_time : null,
+      req.params.id, 
+      req.session.userId
+    ],
     (err) => {
       if (err) {
         return res.redirect('/bots?error=Error updating bot');
@@ -760,17 +864,38 @@ app.post('/api/send', async (req, res) => {
             const results = [];
             for (const bot of bots) {
               try {
+                const botStatus = getBotStatus(bot);
+                
+                if (!botStatus.shouldSendMessage) {
+                  results.push({
+                    bot_name: bot.bot_name,
+                    success: false,
+                    skipped: true,
+                    reason: botStatus.reason
+                  });
+                  continue;
+                }
+                
                 const telegramUrl = `https://api.telegram.org/bot${bot.bot_token}/sendMessage`;
-                const response = await axios.post(telegramUrl, {
+                const messageData = {
                   chat_id: bot.chat_id,
                   text: message,
                   parse_mode: 'HTML'
-                });
+                };
+                
+                // Add silent option if needed
+                if (botStatus.shouldSendSilent) {
+                  messageData.disable_notification = true;
+                }
+                
+                const response = await axios.post(telegramUrl, messageData);
                 
                 results.push({
                   bot_name: bot.bot_name,
                   success: true,
-                  message_id: response.data.result.message_id
+                  message_id: response.data.result.message_id,
+                  silent: botStatus.shouldSendSilent,
+                  reason: botStatus.reason
                 });
               } catch (error) {
                 results.push({

@@ -342,6 +342,84 @@
             color: var(--danger-text, #dc3545);
             border: 1px solid var(--danger-border, rgba(220, 53, 69, 0.3));
         }
+        
+        /* Scheduling Styles */
+        .schedule-section {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+        }
+        
+        .schedule-option {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+        }
+        
+        .schedule-header {
+            margin-bottom: 1rem;
+        }
+        
+        .schedule-checkbox {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+        
+        .schedule-checkbox input[type="checkbox"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+        
+        .label-text {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 0.5rem;
+        }
+        
+        .time-range {
+            padding-left: 1.5rem;
+            border-left: 3px solid var(--border-primary);
+            margin-left: 1rem;
+        }
+        
+        .time-inputs {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+        
+        .time-input {
+            flex: 1;
+        }
+        
+        .time-input label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .time-input input[type="time"] {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .time-input input[type="time"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -534,6 +612,59 @@ curl -X POST http://localhost:3000/api/send \
                         <small style="color: var(--text-muted);">The chat/channel/group ID where messages will be sent</small>
                     </div>
                     
+                    <!-- Scheduling Options -->
+                    <div class="schedule-section">
+                        <h4 style="margin: 1.5rem 0 1rem 0; color: var(--text-primary); border-bottom: 1px solid var(--border-primary); padding-bottom: 0.5rem;">📅 Scheduling Options</h4>
+                        
+                        <!-- Silent Mode -->
+                        <div class="schedule-option">
+                            <div class="schedule-header">
+                                <label class="schedule-checkbox">
+                                    <input type="checkbox" id="add-silent_enabled" name="silent_enabled">
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">🔇 Silent Mode</span>
+                                </label>
+                                <small style="color: var(--text-muted);">Send messages without notification sound during specified hours</small>
+                            </div>
+                            <div class="time-range" id="add-silent-range" style="display: none;">
+                                <div class="time-inputs">
+                                    <div class="time-input">
+                                        <label for="add-silent_start_time">From:</label>
+                                        <input type="time" id="add-silent_start_time" name="silent_start_time">
+                                    </div>
+                                    <div class="time-input">
+                                        <label for="add-silent_end_time">To:</label>
+                                        <input type="time" id="add-silent_end_time" name="silent_end_time">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Paused Mode -->
+                        <div class="schedule-option">
+                            <div class="schedule-header">
+                                <label class="schedule-checkbox">
+                                    <input type="checkbox" id="add-paused_enabled" name="paused_enabled">
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">⏸️ Paused Mode</span>
+                                </label>
+                                <small style="color: var(--text-muted);">Do not send any messages during specified hours</small>
+                            </div>
+                            <div class="time-range" id="add-paused-range" style="display: none;">
+                                <div class="time-inputs">
+                                    <div class="time-input">
+                                        <label for="add-paused_start_time">From:</label>
+                                        <input type="time" id="add-paused_start_time" name="paused_start_time">
+                                    </div>
+                                    <div class="time-input">
+                                        <label for="add-paused_end_time">To:</label>
+                                        <input type="time" id="add-paused_end_time" name="paused_end_time">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="add-test-result"></div>
                 </div>
                 <div class="modal-footer">
@@ -574,6 +705,59 @@ curl -X POST http://localhost:3000/api/send \
                         <small style="color: var(--text-muted);">The chat/channel/group ID where messages will be sent</small>
                     </div>
                     
+                    <!-- Scheduling Options -->
+                    <div class="schedule-section">
+                        <h4 style="margin: 1.5rem 0 1rem 0; color: var(--text-primary); border-bottom: 1px solid var(--border-primary); padding-bottom: 0.5rem;">📅 Scheduling Options</h4>
+                        
+                        <!-- Silent Mode -->
+                        <div class="schedule-option">
+                            <div class="schedule-header">
+                                <label class="schedule-checkbox">
+                                    <input type="checkbox" id="edit-silent_enabled" name="silent_enabled">
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">🔇 Silent Mode</span>
+                                </label>
+                                <small style="color: var(--text-muted);">Send messages without notification sound during specified hours</small>
+                            </div>
+                            <div class="time-range" id="edit-silent-range" style="display: none;">
+                                <div class="time-inputs">
+                                    <div class="time-input">
+                                        <label for="edit-silent_start_time">From:</label>
+                                        <input type="time" id="edit-silent_start_time" name="silent_start_time">
+                                    </div>
+                                    <div class="time-input">
+                                        <label for="edit-silent_end_time">To:</label>
+                                        <input type="time" id="edit-silent_end_time" name="silent_end_time">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Paused Mode -->
+                        <div class="schedule-option">
+                            <div class="schedule-header">
+                                <label class="schedule-checkbox">
+                                    <input type="checkbox" id="edit-paused_enabled" name="paused_enabled">
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">⏸️ Paused Mode</span>
+                                </label>
+                                <small style="color: var(--text-muted);">Do not send any messages during specified hours</small>
+                            </div>
+                            <div class="time-range" id="edit-paused-range" style="display: none;">
+                                <div class="time-inputs">
+                                    <div class="time-input">
+                                        <label for="edit-paused_start_time">From:</label>
+                                        <input type="time" id="edit-paused_start_time" name="paused_start_time">
+                                    </div>
+                                    <div class="time-input">
+                                        <label for="edit-paused_end_time">To:</label>
+                                        <input type="time" id="edit-paused_end_time" name="paused_end_time">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="edit-test-result"></div>
                 </div>
                 <div class="modal-footer">
@@ -592,6 +776,9 @@ curl -X POST http://localhost:3000/api/send \
             const modals = document.querySelectorAll('.modal');
             const addBtn = document.querySelector('[data-modal="add-bot-modal"]');
             const closeBtns = document.querySelectorAll('.modal-close, .modal-cancel');
+            
+            // Setup scheduling checkbox handlers
+            setupSchedulingHandlers();
             
             // Open modal
             if (addBtn) {
@@ -684,6 +871,61 @@ curl -X POST http://localhost:3000/api/send \
             setupTestButton('edit-test-btn', 'edit-bot-form', 'edit-test-result');
         });
         
+        // Scheduling functionality
+        function setupSchedulingHandlers() {
+            // Add modal handlers
+            const addSilentCheckbox = document.getElementById('add-silent_enabled');
+            const addSilentRange = document.getElementById('add-silent-range');
+            const addPausedCheckbox = document.getElementById('add-paused_enabled');
+            const addPausedRange = document.getElementById('add-paused-range');
+            
+            if (addSilentCheckbox && addSilentRange) {
+                addSilentCheckbox.addEventListener('change', function() {
+                    addSilentRange.style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) {
+                        document.getElementById('add-silent_start_time').value = '';
+                        document.getElementById('add-silent_end_time').value = '';
+                    }
+                });
+            }
+            
+            if (addPausedCheckbox && addPausedRange) {
+                addPausedCheckbox.addEventListener('change', function() {
+                    addPausedRange.style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) {
+                        document.getElementById('add-paused_start_time').value = '';
+                        document.getElementById('add-paused_end_time').value = '';
+                    }
+                });
+            }
+            
+            // Edit modal handlers
+            const editSilentCheckbox = document.getElementById('edit-silent_enabled');
+            const editSilentRange = document.getElementById('edit-silent-range');
+            const editPausedCheckbox = document.getElementById('edit-paused_enabled');
+            const editPausedRange = document.getElementById('edit-paused-range');
+            
+            if (editSilentCheckbox && editSilentRange) {
+                editSilentCheckbox.addEventListener('change', function() {
+                    editSilentRange.style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) {
+                        document.getElementById('edit-silent_start_time').value = '';
+                        document.getElementById('edit-silent_end_time').value = '';
+                    }
+                });
+            }
+            
+            if (editPausedCheckbox && editPausedRange) {
+                editPausedCheckbox.addEventListener('change', function() {
+                    editPausedRange.style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) {
+                        document.getElementById('edit-paused_start_time').value = '';
+                        document.getElementById('edit-paused_end_time').value = '';
+                    }
+                });
+            }
+        }
+        
         // Edit bot function
         async function editBot(botId) {
             try {
@@ -699,6 +941,20 @@ curl -X POST http://localhost:3000/api/send \
                 document.getElementById('edit-bot_name').value = bot.bot_name || '';
                 document.getElementById('edit-bot_token').value = bot.bot_token || '';
                 document.getElementById('edit-chat_id').value = bot.chat_id || '';
+                
+                // Populate scheduling fields
+                const silentEnabled = bot.silent_enabled === 1;
+                const pausedEnabled = bot.paused_enabled === 1;
+                
+                document.getElementById('edit-silent_enabled').checked = silentEnabled;
+                document.getElementById('edit-silent_start_time').value = bot.silent_start_time || '';
+                document.getElementById('edit-silent_end_time').value = bot.silent_end_time || '';
+                document.getElementById('edit-silent-range').style.display = silentEnabled ? 'block' : 'none';
+                
+                document.getElementById('edit-paused_enabled').checked = pausedEnabled;
+                document.getElementById('edit-paused_start_time').value = bot.paused_start_time || '';
+                document.getElementById('edit-paused_end_time').value = bot.paused_end_time || '';
+                document.getElementById('edit-paused-range').style.display = pausedEnabled ? 'block' : 'none';
                 
                 // Set form action
                 document.getElementById('edit-bot-form').action = `/bots/${botId}/edit`;

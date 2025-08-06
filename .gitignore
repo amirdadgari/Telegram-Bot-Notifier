@@ -9,3 +9,5 @@ pnpm-debug.log*
 .env
 dist
 docker-compose.yml
+
+*.db
