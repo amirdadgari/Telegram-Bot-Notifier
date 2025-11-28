@@ -73,6 +73,7 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT 1,
     send_to_all BOOLEAN DEFAULT 0,
+    auth_location VARCHAR(10) DEFAULT 'header',
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
 
@@ -115,6 +116,11 @@ db.serialize(() => {
 
   // Add send_to_all column to existing tokens table if it doesn't exist
   db.run(`ALTER TABLE tokens ADD COLUMN send_to_all BOOLEAN DEFAULT 0`, (err) => {
+    // Ignore error if column already exists
+  });
+
+  // Add auth_location column to existing tokens table if it doesn't exist
+  db.run(`ALTER TABLE tokens ADD COLUMN auth_location VARCHAR(10) DEFAULT 'header'`, (err) => {
     // Ignore error if column already exists
   });
 
@@ -376,10 +382,11 @@ app.get('/tokens', requireAuth, (req, res) => {
 app.post('/tokens', requireAuth, (req, res) => {
   const { name, sendToAll, botIds } = req.body;
   const token = uuidv4();
+  const authLocation = ['header','query','body'].includes(req.body.authLocation) ? req.body.authLocation : 'header';
   
   db.run(
-    "INSERT INTO tokens (user_id, token, name, send_to_all) VALUES (?, ?, ?, ?)",
-    [req.session.userId, token, name, sendToAll ? 1 : 0],
+    "INSERT INTO tokens (user_id, token, name, send_to_all, auth_location) VALUES (?, ?, ?, ?, ?)",
+    [req.session.userId, token, name, sendToAll ? 1 : 0, authLocation],
     function(err) {
       if (err) {
         return res.redirect('/tokens?error=Error creating token');
@@ -450,11 +457,12 @@ app.get('/tokens/:id/edit', requireAuth, (req, res) => {
 
 // Update token bot assignments
 app.post('/tokens/:id/edit', requireAuth, (req, res) => {
-  const { name, sendToAll, botIds } = req.body;
+  const { name, sendToAll, botIds, authLocation } = req.body;
+  const safeAuthLocation = ['header','query','body'].includes(authLocation) ? authLocation : 'header';
   
   db.run(
-    "UPDATE tokens SET name = ?, send_to_all = ? WHERE id = ? AND user_id = ?",
-    [name, sendToAll ? 1 : 0, req.params.id, req.session.userId],
+    "UPDATE tokens SET name = ?, send_to_all = ?, auth_location = ? WHERE id = ? AND user_id = ?",
+    [name, sendToAll ? 1 : 0, safeAuthLocation, req.params.id, req.session.userId],
     (err) => {
       if (err) {
         return res.json({ success: false, error: 'Error updating token' });
@@ -807,42 +815,69 @@ app.post('/users/:id/delete', requireAuth, requireAdmin, (req, res) => {
 // API endpoint to send messages
 app.post('/api/send', async (req, res) => {
   const { message } = req.body;
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Authorization token required' });
+  const provided = [];
+  const authHeader = req.headers.authorization;
+  const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (headerToken) provided.push({ source: 'header', value: headerToken });
+  const queryToken = req.query.api_key ? String(req.query.api_key) : null;
+  if (queryToken) provided.push({ source: 'query', value: queryToken });
+  const bodyToken = req.body && req.body.api_key ? String(req.body.api_key) : null;
+  if (bodyToken) provided.push({ source: 'body', value: bodyToken });
+
+  if (provided.length === 0) {
+    return res.status(401).json({ 
+      error: 'API key required',
+      how_to_authenticate: {
+        header: 'Authorization: Bearer YOUR_ACCESS_TOKEN',
+        query: '/api/send?api_key=YOUR_ACCESS_TOKEN',
+        body: '{ "api_key": "YOUR_ACCESS_TOKEN", "message": "..." }'
+      }
+    });
   }
-  
+
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
-  
-  try {
-    // Verify token and get user
+
+  const candidates = provided; // preference: header, then query, then body (push order above)
+  let mismatch = null;
+
+  const tryCandidate = (idx) => {
+    if (idx >= candidates.length) {
+      if (mismatch) {
+        return res.status(401).json({ 
+          error: `API key provided in ${mismatch.provided}, but this token is configured to be sent via ${mismatch.expected}`
+        });
+      }
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const c = candidates[idx];
     db.get(
       `SELECT t.*, u.id as user_id FROM tokens t 
        JOIN users u ON t.user_id = u.id 
        WHERE t.token = ? AND t.is_active = 1`,
-      [token],
+      [c.value],
       async (err, tokenData) => {
         if (err) {
           return res.status(500).json({ error: 'Database error' });
         }
-        
         if (!tokenData) {
-          return res.status(401).json({ error: 'Invalid token' });
+          return tryCandidate(idx + 1);
         }
-        
-        // Get bots based on token assignment
+        if ((tokenData.auth_location || 'header') !== c.source) {
+          mismatch = { provided: c.source, expected: tokenData.auth_location || 'header' };
+          return tryCandidate(idx + 1);
+        }
+
+        // Got valid token for this source
         let botQuery;
         let botParams;
         
         if (tokenData.send_to_all) {
-          // Send to all active bots
           botQuery = "SELECT * FROM telegram_bots WHERE user_id = ? AND is_active = 1";
           botParams = [tokenData.user_id];
         } else {
-          // Send to assigned bots only
           botQuery = `
             SELECT tb.* FROM telegram_bots tb 
             JOIN token_bot_assignments tba ON tb.id = tba.bot_id 
@@ -850,101 +885,127 @@ app.post('/api/send', async (req, res) => {
           `;
           botParams = [tokenData.id];
         }
-        
+
         db.all(botQuery, botParams, async (err, bots) => {
-            if (err) {
-              return res.status(500).json({ error: 'Database error' });
-            }
-            
-            if (bots.length === 0) {
-              return res.status(400).json({ error: 'No bots assigned to this token or no active bots available' });
-            }
-            
-            // Send message to assigned bots
-            const results = [];
-            for (const bot of bots) {
-              try {
-                const botStatus = getBotStatus(bot);
-                
-                if (!botStatus.shouldSendMessage) {
-                  results.push({
-                    bot_name: bot.bot_name,
-                    success: false,
-                    skipped: true,
-                    reason: botStatus.reason
-                  });
-                  continue;
-                }
-                
-                const telegramUrl = `https://api.telegram.org/bot${bot.bot_token}/sendMessage`;
-                const messageData = {
-                  chat_id: bot.chat_id,
-                  text: message,
-                  parse_mode: 'HTML'
-                };
-                
-                // Add silent option if needed
-                if (botStatus.shouldSendSilent) {
-                  messageData.disable_notification = true;
-                }
-                
-                const response = await axios.post(telegramUrl, messageData);
-                
-                results.push({
-                  bot_name: bot.bot_name,
-                  success: true,
-                  message_id: response.data.result.message_id,
-                  silent: botStatus.shouldSendSilent,
-                  reason: botStatus.reason
-                });
-              } catch (error) {
+          if (err) {
+            return res.status(500).json({ error: 'Database error' });
+          }
+          if (bots.length === 0) {
+            return res.status(400).json({ error: 'No bots assigned to this token or no active bots available' });
+          }
+
+          const results = [];
+          for (const bot of bots) {
+            try {
+              const botStatus = getBotStatus(bot);
+              if (!botStatus.shouldSendMessage) {
                 results.push({
                   bot_name: bot.bot_name,
                   success: false,
-                  error: error.response?.data?.description || error.message
+                  skipped: true,
+                  reason: botStatus.reason
                 });
+                continue;
               }
+
+              const telegramUrl = `https://api.telegram.org/bot${bot.bot_token}/sendMessage`;
+              const messageData = {
+                chat_id: bot.chat_id,
+                text: message,
+                parse_mode: 'HTML'
+              };
+              if (botStatus.shouldSendSilent) {
+                messageData.disable_notification = true;
+              }
+              const response = await axios.post(telegramUrl, messageData);
+              results.push({
+                bot_name: bot.bot_name,
+                success: true,
+                message_id: response.data.result.message_id,
+                silent: botStatus.shouldSendSilent,
+                reason: botStatus.reason
+              });
+            } catch (error) {
+              results.push({
+                bot_name: bot.bot_name,
+                success: false,
+                error: error.response?.data?.description || error.message
+              });
             }
-            
-            res.json({
-              success: true,
-              message: 'Message sending completed',
-              results
-            });
           }
-        );
+
+          return res.json({
+            success: true,
+            message: 'Message sending completed',
+            results
+          });
+        });
       }
     );
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  };
+
+  tryCandidate(0);
 });
 
 // API endpoint to get user info (for testing)
 app.get('/api/user', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Authorization token required' });
+  const provided = [];
+  const authHeader = req.headers.authorization;
+  const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (headerToken) provided.push({ source: 'header', value: headerToken });
+  const queryToken = req.query.api_key ? String(req.query.api_key) : null;
+  if (queryToken) provided.push({ source: 'query', value: queryToken });
+  const bodyToken = req.body && req.body.api_key ? String(req.body.api_key) : null;
+  if (bodyToken) provided.push({ source: 'body', value: bodyToken });
+
+  if (provided.length === 0) {
+    return res.status(401).json({ 
+      error: 'API key required',
+      how_to_authenticate: {
+        header: 'Authorization: Bearer YOUR_ACCESS_TOKEN',
+        query: '/api/user?api_key=YOUR_ACCESS_TOKEN',
+        body: '{ "api_key": "YOUR_ACCESS_TOKEN" }'
+      }
+    });
   }
-  
-  db.get(
-    `SELECT t.name as token_name, u.username FROM tokens t 
-     JOIN users u ON t.user_id = u.id 
-     WHERE t.token = ? AND t.is_active = 1`,
-    [token],
-    (err, data) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
+
+  const candidates = provided;
+  let mismatch = null;
+
+  const tryCandidate = (idx) => {
+    if (idx >= candidates.length) {
+      if (mismatch) {
+        return res.status(401).json({ 
+          error: `API key provided in ${mismatch.provided}, but this token is configured to be sent via ${mismatch.expected}`
+        });
       }
-      
-      if (!data) {
-        return res.status(401).json({ error: 'Invalid token' });
-      }
-      
-      res.json(data);
+      return res.status(401).json({ error: 'Invalid token' });
     }
-  );
+
+    const c = candidates[idx];
+    db.get(
+      `SELECT t.name as token_name, u.username, t.auth_location FROM tokens t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE t.token = ? AND t.is_active = 1`,
+      [c.value],
+      (err, data) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error' });
+        }
+        if (!data) {
+          return tryCandidate(idx + 1);
+        }
+        if ((data.auth_location || 'header') !== c.source) {
+          mismatch = { provided: c.source, expected: data.auth_location || 'header' };
+          return tryCandidate(idx + 1);
+        }
+        const { auth_location, ...rest } = data;
+        return res.json(rest);
+      }
+    );
+  };
+
+  tryCandidate(0);
 });
 
 // Start server

@@ -683,15 +683,30 @@
         <% if (tokens.length > 0) { %>
         <div class="card">
             <h3>📡 Using Your Access Tokens</h3>
-            <p>Use your access tokens to send messages via the API:</p>
-            
+            <p>Use your access tokens to send messages via the API. You can authenticate in one of three ways. Make sure the method matches what you selected when creating the token.</p>
+
             <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 5px; margin: 1rem 0; font-family: 'Courier New', monospace; overflow-x: auto;">
+<strong>1) Header (Authorization: Bearer ...)</strong><br>
 curl -X POST http://localhost:3000/api/send \<br>
 &nbsp;&nbsp;-H "Authorization: Bearer YOUR_TOKEN_HERE" \<br>
 &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
 &nbsp;&nbsp;-d '{"message": "Hello from webhook!"}'
             </div>
-            
+
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 5px; margin: 1rem 0; font-family: 'Courier New', monospace; overflow-x: auto;">
+<strong>2) Query Parameter (?api_key=...)</strong><br>
+curl -X POST "http://localhost:3000/api/send?api_key=YOUR_TOKEN_HERE" \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"message": "Hello from webhook!"}'
+            </div>
+
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 5px; margin: 1rem 0; font-family: 'Courier New', monospace; overflow-x: auto;">
+<strong>3) Request Body (api_key in JSON)</strong><br>
+curl -X POST http://localhost:3000/api/send \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"api_key": "YOUR_TOKEN_HERE", "message": "Hello from webhook!"}'
+            </div>
+
             <p><strong>Note:</strong> Make sure you have configured at least one Telegram bot before sending messages.</p>
         </div>
         <% } %>
@@ -779,6 +794,18 @@ curl -X POST http://localhost:3000/api/send \<br>
                             <% } %>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label>Authentication Method</label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-primary);">
+                            <label><input type="radio" name="authLocation" value="header" checked> Header</label>
+                            <label><input type="radio" name="authLocation" value="query"> Query param</label>
+                            <label><input type="radio" name="authLocation" value="body"> Body</label>
+                        </div>
+                        <small><strong>Header</strong>: Authorization: Bearer YOUR_ACCESS_TOKEN</small>
+                        <small><strong>Query</strong>: /api/send?api_key=YOUR_ACCESS_TOKEN</small>
+                        <small><strong>Body</strong>: { "api_key": "YOUR_ACCESS_TOKEN" }</small>
+                    </div>
                     
                     <div class="test-result" id="add-test-result"></div>
                 </div>
@@ -834,6 +861,18 @@ curl -X POST http://localhost:3000/api/send \<br>
                                 <% }) %>
                             <% } %>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Authentication Method</label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-primary);">
+                            <label><input type="radio" name="editAuthLocation" value="header"> Header</label>
+                            <label><input type="radio" name="editAuthLocation" value="query"> Query param</label>
+                            <label><input type="radio" name="editAuthLocation" value="body"> Body</label>
+                        </div>
+                        <small><strong>Header</strong>: Authorization: Bearer YOUR_ACCESS_TOKEN</small>
+                        <small><strong>Query</strong>: /api/send?api_key=YOUR_ACCESS_TOKEN</small>
+                        <small><strong>Body</strong>: { "api_key": "YOUR_ACCESS_TOKEN" }</small>
                     </div>
                     
                     <div class="test-result" id="edit-test-result"></div>
@@ -1081,6 +1120,12 @@ curl -X POST http://localhost:3000/api/send \<br>
                             }
                         });
                     }
+
+                    // Set auth location radios
+                    const authValue = token.auth_location || 'header';
+                    document.querySelectorAll('input[name="editAuthLocation"]').forEach(r => {
+                        r.checked = (r.value === authValue);
+                    });
                     
                     // Update UI based on send_to_all
                     toggleEditSendToAll();
@@ -1110,7 +1155,8 @@ curl -X POST http://localhost:3000/api/send \<br>
                     body: JSON.stringify({
                         name: formData.get('name'),
                         sendToAll: formData.get('sendToAll') === 'on',
-                        botIds: formData.getAll('botIds')
+                        botIds: formData.getAll('botIds'),
+                        authLocation: formData.get('editAuthLocation') || 'header'
                     })
                 });
                 

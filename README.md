@@ -105,25 +105,41 @@ If you find this project useful, please give it a star! It helps others discover
 
 **POST** `/api/send`
 
-**Headers:**
-```
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-```
+Authentication methods (choose ONE and make sure it matches the token setting on the Access Tokens page):
 
-**Body:**
+- Header: `Authorization: Bearer YOUR_ACCESS_TOKEN`
+- Query: `?api_key=YOUR_ACCESS_TOKEN`
+- Body: JSON field `api_key`
+
+Body:
 ```json
 {
   "message": "Your message here"
 }
 ```
 
-**Example with curl:**
+Examples:
+
+1) Header (Authorization: Bearer ...)
 ```bash
 curl -X POST http://localhost:3000/api/send \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"message": "🚀 Hello from webhook!"}'
+```
+
+2) Query parameter (?api_key=...)
+```bash
+curl -X POST "http://localhost:3000/api/send?api_key=YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "🚀 Hello from webhook!"}'
+```
+
+3) Request body (api_key in JSON)
+```bash
+curl -X POST http://localhost:3000/api/send \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "YOUR_ACCESS_TOKEN", "message": "🚀 Hello from webhook!"}'
 ```
 
 **Response:**
@@ -145,10 +161,10 @@ curl -X POST http://localhost:3000/api/send \
 
 **GET** `/api/user`
 
-**Headers:**
-```
-Authorization: Bearer YOUR_ACCESS_TOKEN
-```
+Authentication methods:
+- Header: `Authorization: Bearer YOUR_ACCESS_TOKEN`
+- Query: `?api_key=YOUR_ACCESS_TOKEN`
+- Body: `{ "api_key": "YOUR_ACCESS_TOKEN" }`
 
 ## 🖥️ Web Interface
 
@@ -232,6 +248,8 @@ webhook-to-telegram/
 - `token`: UUID access token
 - `name`: Token description
 - `is_active`: Active status
+- `send_to_all`: Send messages to all current and future bots
+- `auth_location`: Where API key must be provided (`header`, `query`, or `body`)
 
 ### Telegram Bots Table
 - `id`: Primary key
