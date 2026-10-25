@@ -3,11 +3,22 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('node:crypto');
+const uuidv4 = crypto.randomUUID;
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.disable('x-powered-by');
+if (process.env.TRUST_PROXY && process.env.TRUST_PROXY !== 'false') {
+  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : process.env.TRUST_PROXY);
+}
+const configuredSecret = process.env.SESSION_SECRET;
+if (process.env.NODE_ENV === 'production' &&
+    (!configuredSecret || configuredSecret.length < 32 ||
+     configuredSecret === 'your-secret-key-change-in-production')) {
+  throw new Error('Production requires a unique SESSION_SECRET of at least 32 characters');
+}
 
 // Middleware
 app.use(express.json());
@@ -27,10 +38,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  secret: configuredSecret || crypto.randomBytes(32).toString('hex'),
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: 'auto' }
 }));
 
 // Database setup
@@ -125,23 +136,27 @@ db.serialize(() => {
   });
 
   // Create admin user if not exists
-  db.get("SELECT * FROM users WHERE username = 'admin'", (err, row) => {
+  db.get("SELECT id FROM users WHERE is_admin = 1 LIMIT 1", (err, row) => {
     if (err) {
       console.error('Error checking admin user:', err);
       return;
     }
     
     if (!row) {
-      const hashedPassword = bcrypt.hashSync('changeme', 10);
+      const password = process.env.ADMIN_PASSWORD;
+      if (!password || password.length < 12) {
+        console.error('Set ADMIN_PASSWORD (at least 12 characters) to initialize a new database');
+        process.exit(1);
+      }
+      const hashedPassword = bcrypt.hashSync(password, 10);
       db.run(
         "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-        ['admin', hashedPassword, 1],
+        [process.env.ADMIN_USERNAME || 'admin', hashedPassword, 1],
         function(err) {
           if (err) {
             console.error('Error creating admin user:', err);
           } else {
-            console.log('Admin user created with username: admin, password: changeme');
-            console.log('Please change the password after first login!');
+            console.log('Initial admin account created using the configured password');
           }
         }
       );
@@ -204,6 +219,13 @@ const requireAdmin = (req, res, next) => {
 };
 
 // Routes
+
+app.get('/health', (req, res) => {
+  db.get('SELECT 1 AS ok', (err) => {
+    res.set('Cache-Control', 'no-store');
+    res.status(err ? 503 : 200).json({ status: err ? 'unavailable' : 'ok' });
+  });
+});
 
 // Home page - redirect to dashboard if logged in, otherwise to login
 app.get('/', (req, res) => {
@@ -354,8 +376,8 @@ app.get('/tokens', requireAuth, (req, res) => {
           const tokenPromises = tokens.map(token => {
             return new Promise((resolve) => {
               db.all(
-                "SELECT tb.* FROM telegram_bots tb JOIN token_bot_assignments tba ON tb.id = tba.bot_id WHERE tba.token_id = ?",
-                [token.id],
+                "SELECT tb.* FROM telegram_bots tb JOIN token_bot_assignments tba ON tb.id = tba.bot_id WHERE tba.token_id = ? AND tb.user_id = ?",
+                [token.id, req.session.userId],
                 (err, assignedBots) => {
                   token.assignedBots = err ? [] : assignedBots;
                   resolve(token);
@@ -399,8 +421,8 @@ app.post('/tokens', requireAuth, (req, res) => {
         const assignments = botIds.map(botId => {
           return new Promise((resolve) => {
             db.run(
-              "INSERT INTO token_bot_assignments (token_id, bot_id) VALUES (?, ?)",
-              [tokenId, botId],
+              "INSERT INTO token_bot_assignments (token_id, bot_id) SELECT ?, id FROM telegram_bots WHERE id = ? AND user_id = ?",
+              [tokenId, botId, req.session.userId],
               (err) => resolve()
             );
           });
@@ -441,8 +463,8 @@ app.get('/tokens/:id/edit', requireAuth, (req, res) => {
       
       // Get assigned bots
       db.all(
-        "SELECT bot_id FROM token_bot_assignments WHERE token_id = ?",
-        [token.id],
+        "SELECT tba.bot_id FROM token_bot_assignments tba JOIN telegram_bots tb ON tb.id = tba.bot_id WHERE tba.token_id = ? AND tb.user_id = ?",
+        [token.id, req.session.userId],
         (err, assignments) => {
           const assignedBotIds = err ? [] : assignments.map(a => a.bot_id);
           res.json({ 
@@ -463,9 +485,12 @@ app.post('/tokens/:id/edit', requireAuth, (req, res) => {
   db.run(
     "UPDATE tokens SET name = ?, send_to_all = ?, auth_location = ? WHERE id = ? AND user_id = ?",
     [name, sendToAll ? 1 : 0, safeAuthLocation, req.params.id, req.session.userId],
-    (err) => {
+    function(err) {
       if (err) {
         return res.json({ success: false, error: 'Error updating token' });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, error: 'Token not found' });
       }
       
       // Clear existing assignments
@@ -482,8 +507,8 @@ app.post('/tokens/:id/edit', requireAuth, (req, res) => {
             const assignments = botIds.map(botId => {
               return new Promise((resolve) => {
                 db.run(
-                  "INSERT INTO token_bot_assignments (token_id, bot_id) VALUES (?, ?)",
-                  [req.params.id, botId],
+                  "INSERT INTO token_bot_assignments (token_id, bot_id) SELECT ?, id FROM telegram_bots WHERE id = ? AND user_id = ?",
+                  [req.params.id, botId, req.session.userId],
                   (err) => resolve()
                 );
               });
@@ -523,9 +548,9 @@ app.post('/tokens/:id/test', requireAuth, (req, res) => {
         botQuery = `
           SELECT tb.* FROM telegram_bots tb 
           JOIN token_bot_assignments tba ON tb.id = tba.bot_id 
-          WHERE tba.token_id = ? AND tb.is_active = 1
+          WHERE tba.token_id = ? AND tb.is_active = 1 AND tb.user_id = ?
         `;
-        botParams = [token.id];
+        botParams = [token.id, req.session.userId];
       }
       
       db.all(botQuery, botParams, async (err, bots) => {
@@ -814,7 +839,7 @@ app.post('/users/:id/delete', requireAuth, requireAdmin, (req, res) => {
 
 // API endpoint to send messages
 app.post('/api/send', async (req, res) => {
-  const { message } = req.body;
+  const { message } = req.body || {};
   const provided = [];
   const authHeader = req.headers.authorization;
   const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -881,9 +906,9 @@ app.post('/api/send', async (req, res) => {
           botQuery = `
             SELECT tb.* FROM telegram_bots tb 
             JOIN token_bot_assignments tba ON tb.id = tba.bot_id 
-            WHERE tba.token_id = ? AND tb.is_active = 1
+            WHERE tba.token_id = ? AND tb.is_active = 1 AND tb.user_id = ?
           `;
-          botParams = [tokenData.id];
+          botParams = [tokenData.id, tokenData.user_id];
         }
 
         db.all(botQuery, botParams, async (err, bots) => {

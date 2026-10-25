@@ -1,6 +1,6 @@
 # 📱 Telegram Bot Notifier
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-green.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-supported-blue.svg)](https://www.docker.com/)
 
@@ -33,7 +33,7 @@ If you find this project useful, please give it a star! It helps others discover
 
 ## 📋 Prerequisites
 
-- Node.js 18+ or Docker
+- Node.js 24+ or Docker
 - Telegram Bot Token (from @BotFather)
 - Chat ID where messages will be sent
 
@@ -54,7 +54,7 @@ If you find this project useful, please give it a star! It helps others discover
    - Open http://localhost:3000
    - Login with default credentials:
      - Username: `admin`
-     - Password: `changeme`
+     - Password: your configured `ADMIN_PASSWORD` (at least 12 characters)
    - You'll be prompted to change the password on first login
 
 ## 🛠️ Manual Installation
@@ -180,7 +180,7 @@ The system provides a clean, responsive web interface with the following pages:
 
 ### Default Admin Account
 - Username: `admin`
-- Password: `changeme` (must be changed on first login)
+- Password: your configured `ADMIN_PASSWORD` (at least 12 characters) (must be changed on first login)
 
 ### Adding New Users (Admin only)
 1. Go to the "Users" page
@@ -193,7 +193,7 @@ The system provides a clean, responsive web interface with the following pages:
 
 - **Session-based authentication**
 - **Password requirements** (minimum 6 characters)
-- **Forced password change** for default admin
+- **Explicit administrator password** required for new databases
 - **Access token validation** for API requests
 - **User isolation** (users can only see their own data)
 - **Admin-only user management**
@@ -415,3 +415,7 @@ Security is a top priority:
 - **🤝 Pull Requests**: Contribute code improvements
 
 **Need help?** Check the troubleshooting section above or open an issue on the [project repository](https://github.com/your-username/webhook-to-telegram/issues).
+
+### Security configuration
+
+Production requires a unique `SESSION_SECRET` of at least 32 characters. New databases require `ADMIN_PASSWORD` of at least 12 characters; existing accounts are preserved. Set `TRUST_PROXY` to your trusted reverse proxy address or CIDR. `/health` checks SQLite availability. Never commit databases or credentials. Rotate any credential exposed in Git history with its provider; removing the file does not revoke it.

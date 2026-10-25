@@ -3,6 +3,7 @@
 # Docker entrypoint script to handle permissions and initialization
 
 set -e
+umask 077
 
 echo "🐳 Docker entrypoint: Setting up permissions..."
 
@@ -15,7 +16,8 @@ fi
 # Fix ownership and permissions for data directory
 echo "🔧 Setting ownership for /app/data..."
 chown -R nodeuser:nodejs /app/data
-chmod -R 755 /app/data
+find /app/data -type d -exec chmod 700 {} +
+find /app/data -type f -exec chmod 600 {} +
 
 # Ensure nodeuser can write to the data directory
 echo "✅ Testing write permissions..."
@@ -23,18 +25,19 @@ if su-exec nodeuser touch /app/data/.write-test 2>/dev/null; then
     rm -f /app/data/.write-test
     echo "✅ Write permissions OK"
 else
-    echo "❌ Write permission test failed, fixing..."
-    # Force fix permissions
-    chmod 777 /app/data
-    chown -R nodeuser:nodejs /app/data
+    echo "❌ Data directory is not writable by the application user"
+    exit 1
 fi
 
 # Create logs directory if it doesn't exist
 if [ ! -d "/app/logs" ]; then
     mkdir -p /app/logs
     chown nodeuser:nodejs /app/logs
-    chmod 755 /app/logs
+    chmod 700 /app/logs
 fi
+chown -R nodeuser:nodejs /app/logs
+find /app/logs -type d -exec chmod 700 {} +
+find /app/logs -type f -exec chmod 600 {} +
 
 echo "🚀 Starting application as nodeuser..."
 

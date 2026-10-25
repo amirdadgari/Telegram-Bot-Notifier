@@ -12,3 +12,8 @@ docker-compose.yml
 
 *.db
 database.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*

@@ -65,12 +65,12 @@ console.log(`🌐 Server will start on port: ${process.env.PORT || 3000}`);
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+  console.error('❌ Uncaught Exception:', error.message);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection:', reason instanceof Error ? reason.message : 'Unexpected rejection');
   process.exit(1);
 });
 
